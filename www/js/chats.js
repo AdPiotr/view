@@ -1,80 +1,55 @@
 angular.module('starter.chats', [])
 
-.factory('Chats', function(Bluetooth) {
-    // Co ma robic:
-    // - zapamietuje historie czatow (fajnie jakby w pliku czy cos ale moze byc w tabelce)
-    // - decyduje co zrobic z przychodzacym message
-    // - i reszta funkcji
-
-	// Some fake testing data
-	var chats = [{
-        id: "1-2-3-4",
-        paired: true,
-        name: "Nazwa",
-        chat: [
-            {text: "dsafwew", yours: true},
-            {text: "dfghhthe", yours: true},
-            {text: "sdfsdfs", yours: false},
-        ]
-	}, {
-        id: "2-2-3-4",
-        paired: true,
-		name: 'Max Lynx',
-        chat: [
-            {text: "xcdgd", yours: true},
-            {text: "dsd", yours: true},
-            {text: "dsfsd", yours: false},
-        ]
-	}, {
-        id: "3-2-3-4",
-        paired: true,
-		name: 'Adam Bradleyson',
-        chat: [
-            {text: "hytjyr", yours: false},
-            {text: "sdfsdf", yours: true},
-            {text: "hytjyu", yours: false},
-        ]
-	}, {
-        id: "4-2-3-4",
-        paired: true,
-		name: 'Perry Governor',
-        chat: [
-            {text: "sdvtrj", yours: false},
-            {text: "43trty", yours: false},
-            {text: "ytjt", yours: false},
-        ]
-	}, {
-        id: "5-2-3-4",
-        paired: false,
-		name: 'Mike Harrington',
-        chat: [
-            {text: "sdf3yty56n", yours: true},
-            {text: "fefgtrh", yours: true},
-            {text: "sdfsds", yours: true},
-        ]
-	}];
+.factory('Chats', function(Bluetooth, $rootScope) {
+	
+	var chats = []
+	var currentChat = { chat: [] }
+	
+	function updateChats() {
+		var devices = Bluetooth.list();
+		chats = []
+		for(addr in devices){
+			var device = devices[addr]
+			chats.push({
+				name: device.name,
+				address: device.address,
+				paired: device.paired,
+				chat: [],
+			})
+		}
+	}
+	
+	Bluetooth.onMessage(message => {
+		currentChat.chat.push({owner: "his", text: message.text})
+		$rootScope.$broadcast("newMessage");
+	})
 
 	return {
         // zwraca liste wszystkich czatow
 		list: function() {
+			updateChats()
 			return chats;
 		},
         // zwraca konkretny czat
-		get: function(chatId) {
-			for (var i = 0; i < chats.length; i++) {
-				if (chats[i].id === parseInt(chatId)) {
-					return chats[i];
+		startChat: function(addr) {
+			updateChats()
+			for(chat of chats) {
+				if(chat.address == addr){
+					Bluetooth.connect(addr)
+					currentChat = chat
+					return chat;
 				}
 			}
-			return null;
+			currentChat = chats[0]
+			return chats[0];
 		},
-        // zostaje odpalony kiedy przychodzi pakiet od rozmowcy
-        onMessage: function(message) {
-            
-        },
         // zostaje odpalony kiedy ma zostac wyslana wiadomosc do rozmowcy
         onInput: function(text) {
-            
+            Bluetooth.send({
+				type: "text",
+				text: text,
+			})
+			currentChat.chat.push({owner: "your", text: text})
         }
 	};
 });

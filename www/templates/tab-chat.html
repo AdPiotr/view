@@ -1,5 +1,15 @@
-<ion-view view-title="Chat with {{other.name}} {{count}}">
+<ion-view view-title="Chat with {{other.name}}">
 	<ion-content>
-		No tutaj sie da te dymki z czatem.
+		<div class="dymekwrap" ng-repeat="msg in other.chat">
+			<div class="dymek {{msg.owner}}">
+				{{msg.text}}
+			</div>
+		</div>
+		<div class="item item-input-inset">
+			<input type="text" placeholder="Message" ng-model="params.message">
+			<button class="button button-small" ng-click="send()">
+				Send
+			</button>
+		</div>
 	</ion-content>
 </ion-view>

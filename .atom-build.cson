@@ -1,0 +1,5 @@
+{
+  cmd: "cordova run android"
+  name: "start"
+  cwd: "{PROJECT_PATH}"
+}

@@ -8,15 +8,25 @@ angular.module('starter.controllers', [])
 	Bluetooth.refreshList()
 })
 
-.controller('PeopleCtrl', function($scope, Chats) {
-	$scope.chats = Chats.all();
-	$scope.remove = function(chat) {
-		Chats.remove(chat);
-	};
+.controller('PeopleCtrl', function($scope, $rootScope, Chats, Bluetooth) {
+	$scope.chats = Chats.list();
+	$scope.refresh = Bluetooth.refreshList
+	$rootScope.$on("newDevice", function(){
+        $scope.$evalAsync(function () {
+			$scope.chats = Chats.list();
+		})
+	});
 })
 
-.controller('ChatCtrl', function($scope, $stateParams, $interval, Chats) {
-	$scope.other = Chats.get($stateParams.chatId);
-	var c = 0;
-	$interval(() => $scope.count = c++, 500)
+.controller('ChatCtrl', function($scope, $rootScope, $stateParams, $interval, Chats) {
+	$scope.$on('$ionicView.enter', function(e) {
+		$scope.other = Chats.startChat($stateParams.chatId);
+	})
+	$scope.params = {}
+	$scope.send = () => Chats.onInput($scope.params.message)
+	$rootScope.$on("newMessage", function(){
+        $scope.$evalAsync(function () {
+			$scope.other = $scope.other;
+		})
+	});
 });
